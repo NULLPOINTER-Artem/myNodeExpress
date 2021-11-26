@@ -1,23 +1,41 @@
 /*
-    path: [callbacks]
+    path: {
+      all: [callbacks],
+      method: [callbacks]
+    }
     "all": [callbacks] // this is array of callbacks for every router
 */
 
-const middleware = {};
+const middleware = {
+  all: [],
+};
 
-const handleRegisterMiddleware = (path, callback) => {
+const handleRegisterMiddleware = (path, callback, method = "all") => {
   if (path) {
     if (middleware[path]) {
-      middleware[path].push(callback);
+      if (method === "all") {
+        middleware[path].all.push(callback);
+      } else {
+        if (middleware[path][method]) {
+          middleware[path][method].push(callback);
+        } else {
+          middleware[path][method] = [callback];
+        }
+      }
     } else {
-      middleware[path] = [];
-      middleware[path].push(callback);
+      middleware[path] = {
+        all: [],
+      };
+
+      if (method === "all") {
+        middleware[path].all.push(callback);
+      } else {
+        middleware[path][method] = [callback];
+      }
     }
   } else {
     if (middleware["all"]) {
-      middleware["all"].path(callback);
-    } else {
-      middleware["all"] = [].push(callback);
+      middleware["all"].push(callback);
     }
   }
 
@@ -25,42 +43,34 @@ const handleRegisterMiddleware = (path, callback) => {
   console.log(middleware);
 };
 
-const handlePipeOfCallbacks = async (callbacks, req, res) => {
-  try {
-    for await (const callback of callbacks) {
-      try {
-        await new Promise((resolve, reject) => {
-          const result = callback(req, res);
+const handlePipeOfCallbacks = (callbacks, req, res) => {
+  let result = true;
 
-          if (!result) {
-            reject("Middleware did not pass");
-          }
+  for (let callback of callbacks) {
+    result = callback(req, res);
 
-          resolve(result);
-        });
-      } catch (err) {
-        throw Error(err);
-      }
+    if (!result) {
+      break;
     }
-  } catch (err) {
-    throw Error(err);
   }
+
+  return result;
 };
 
-const handleExecutionMiddleware = (path, req, res) => {
-  try {
-    if (path) {
-      if (middleware[path]) {
-        handlePipeOfCallbacks(middleware[path], req, res);
-      }
-    } else {
-      if (middleware["all"]) {
-        handlePipeOfCallbacks(middleware["all"], req, res);
-      }
+const handleExecutionMiddleware = (path, req, res, method) => {
+  let result = true;
+
+  result = handlePipeOfCallbacks(middleware["all"], req, res);
+
+  if (path && result && middleware[path]) {
+    result = handlePipeOfCallbacks(middleware[path].all, req, res);
+
+    if (result && middleware[path][method]) {
+      result = handlePipeOfCallbacks(middleware[path][method], req, res);
     }
-  } catch (err) {
-    throw Error(err);
   }
+
+  return result;
 };
 
 module.exports = {

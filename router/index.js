@@ -26,23 +26,19 @@ const handleRegisterRouter = (path, method, callback) => {
 const handleRequestRouter = (req, res) => {
   const url = req.url;
   const method = req.method;
+  const resultMiddleware = handleExecutionMiddleware(url, req, res, req.method);
 
-  new Promise((resolve, reject) => {
-    try {
-      handleExecutionMiddleware("", req, res);
-      handleExecutionMiddleware(url, req, res);
-
-      resolve();
-    } catch (err) {
-      reject(err);
-    }
-  })
-    .then(() => {
+  if (resultMiddleware) {
+    if (router[url][method]) {
       router[url][method](req, res);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not Found - 404");
+    }
+  } else {
+    res.writeHead(400, { "Content-Type": "text/plain" });
+    res.end("Middleware did not pass - 400");
+  }
 };
 
 module.exports = {
