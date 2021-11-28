@@ -17,6 +17,8 @@
     Standard Express using "methods", "accepts" npm packages from https://github.com/jshttp
 
     Implement your custom node js framework
+    // learn about "util" module
+        util.inspect(), util.format(), util.inherits()
     Learn how to transform data from req, res objects to endpoints handlers (Middleware) PARAMS - cool theme!
     Work with streams & files & event emitter, work_thread + cluster
     Watch videos from "ulbi TV"

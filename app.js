@@ -1,9 +1,14 @@
 const app = require("./server");
+const util = require("util");
+
+const posts = [];
 
 const responseMsg = (msg, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.write(msg);
-  res.end();
+  const message = {
+    message: msg,
+  };
+
+  res.send(message, 200);
 };
 
 const checkReqMethod = (req, res) => {
@@ -43,6 +48,59 @@ app.get(
   },
   checkReqMethod,
   checkUrlStarts
+);
+
+app.get("/posts", (req, res) => {
+  res.send(posts, 200);
+});
+
+app.get("/posts/:id", (req, res) => {
+  console.log(req.params);
+  console.log(req.query);
+  // to realize "req.query" && "req.params"
+  res.send({ message: "ok" }, 200);
+});
+
+app.post(
+  "/post",
+  (req, res) => {
+    posts.push({ ...req.body, id: posts.length + 1 });
+
+    res.send(
+      {
+        message: "OK",
+      },
+      200
+    );
+  },
+  (req, res) => {
+    if (req.body) {
+      return true;
+    }
+
+    return false;
+  },
+  (req, res) => {
+    if (
+      app.utils.interfaceEqual(
+        req.body,
+        {
+          author: "",
+          text: "",
+          date: "",
+        },
+        {
+          checkOnDate: {
+            date: "",
+          },
+        }
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+  }
 );
 
 app.get(

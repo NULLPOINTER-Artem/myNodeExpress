@@ -2,16 +2,24 @@ const http = require("http");
 const { handleRequestRouter } = require("./../router");
 const { handleRegisterMiddleware } = require("./../middleware");
 const methods = require("./../methods");
+const { _Response, _Request } = require("./../http");
+const myLodash = require("./../myLodash");
 
 const app =
   (exports =
   module.exports =
     {
       ...methods,
+      utils: {
+        ...myLodash,
+      },
     });
 
 const handleServer = (request, response) => {
-  handleRequestRouter(request, response);
+  const clientRequest = _Request(request);
+  const serverResponse = _Response(response);
+
+  clientRequest.onDataBody(clientRequest, serverResponse, handleRequestRouter);
 };
 
 app.use = (...args) => {
